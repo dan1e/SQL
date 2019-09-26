@@ -1,0 +1,141 @@
+set echo on;
+
+Drop table FUNCIONARIO CASCADE CONSTRAINTS PURGE;
+
+CREATE TABLE FUNCIONARIO (
+CD_FUNC	    NUMBER(10)                      ,
+NM_FUNC	    VARCHAR2(50)    NOT NULL        ,
+IN_ATIVO    NUMBER(1)		NOT NULL        ,
+IN_SEXO	    VARCHAR2(1)		NOT NULL        ,
+DT_NASC	    DATE			NOT NULL        ,
+DT_ADMISSAO	DATE   DEFAULT SYSDATE NOT NULL ,
+VL_SALARIO	NUMBER(9,2)                     ,	
+CD_DEPTO	NUMBER(6)	/*NN, FK (DEPTO) */ ,
+CD_CHEFE_FUNC	NUMBER(10)	/*FK (FUNC)*/   ,
+            CONSTRAINT sal_maior
+                CHECK(VL_SALARIO >0),
+            CONSTRAINT  pk_funcionario
+                PRIMARY KEY (CD_FUNC),
+            CONSTRAINT sexo_bin
+                CHECK(IN_SEXO IN('M','F')),
+            CONSTRAINT dt_nasci_ch
+                CHECK(DT_NASC < DT_ADMISSAO),
+            CONSTRAINT in_ativo_ch
+                CHECK (IN_ATIVO IN (0,1))
+);
+
+Drop table DEPARTAMENTO CASCADE CONSTRAINTS PURGE;
+
+CREATE TABLE DEPARTAMENTO (
+
+CD_DEPTO	NUMBER(6)                       ,
+NM_DEPTO	VARCHAR2(50)	NOT NULL        ,
+SG_DEPTO	VARCHAR2(10)    NOT NULL UNIQUE , 
+            CONSTRAINT pk_cd_depto
+                PRIMARY KEY(CD_DEPTO)
+);
+
+DROP TABLE PROJETO CASCADE CONSTRAINTS PURGE;
+
+CREATE TABLE PROJETO (
+CD_PROJ	NUMBER(10)		            ,
+NM_PROJ	VARCHAR2(10)	    NOT NULL,
+TX_OBS_PROJ	VARCHAR2(100)   NOT NULL,
+            CONSTRAINT pk_cd_proj
+                PRIMARY KEY(CD_PROJ)
+);
+
+
+ALTER TABLE FUNCIONARIO
+ADD CONSTRAINT fk_cod_dept
+    Foreign key (CD_DEPTO)
+    REFERENCES DEPARTAMENTO;
+
+ALTER TABLE FUNCIONARIO
+ADD CONSTRAINT fk_cod_chefe
+    FOREIGN KEY (CD_CHEFE_FUNC)
+    REFERENCES  FUNCIONARIO;
+
+CREATE SEQUENCE SQ_FUNCIONARIO;
+CREATE SEQUENCE SQ_DEPARTAMENTO;
+CREATE SEQUENCE SQ_PROJETO;
+
+--FUNCIONARIO” e “PROJETO”, 
+CREATE TABLE NPROJFUC(
+    CD_DEPTO	NUMBER(6),  
+    CD_PROJ	    NUMBER(10),
+    Constraint fknn_departamento
+    Foreign key (CD_DEPTO)
+    REFERENCES DEPARTAMENTO,
+    Constraint fknn_projeto
+    Foreign key(CD_PROJ)
+    REFERENCES PROJETO,
+    PRIMARY KEY (CD_DEPTO,CD_PROJ)
+    );
+
+--Aumente o tamanho da coluna “TX_OBS_PROJ”, da tabela “PROJETO”, para 200 (duzentos) caracteres.
+ALTER TABLE PROJETO
+MODIFY TX_OBS_PROJ VARCHAR2(200);
+
+ALTER TABLE FUNCIONARIO
+MODIFY VL_SALARIO NOT NULL;
+
+ALTER TABLE FUNCIONARIO 
+DISABLE CONSTRAINT SYS_C006995885;
+
+ALTER TABLE FUNCIONARIO
+ADD CONSTRAINT nn_nullfuc
+    Check(VL_SALARIO IS NOT NULL);
+    
+    
+--Acrescente a coluna “TX_OBS_FUNC” na tabela “FUNCIONARIO”, com tipo “caractere” e tamanho = 500.
+
+ALTER TABLE FUNCIONARIO 
+ADD TX_OBS_FUNC varchar2(500);
+
+/*Consulte o dicionário de dados para verificar todos os objetos criados (USER_OBJECTS), 
+ordenando por tipo do objeto e nome do objeto, apresentando: tipo, nome, data de criação e status. */
+
+DESC FUNCIONARIO;
+SELECT * FROM TAB;
+
+SELECT * FROM USER_OBJECTS
+ORDER BY OBJECT_TYPE, OBJECT_NAME;
+
+/*Consulte o dicionário de dados para verificar todas as colunas (USER_TAB_COLUMNS), 
+ordenando por tabela e nome da coluna, apresentando: tabela, nome da coluna, tipo.*/
+
+SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE FROM USER_TAB_COLUMNS;
+
+/*Consulte o dicionário de dados para verificar as constraints (USER_CONSTRAINTS),
+apresentando, pelo menos, o nome da tabela, nome da constraint, tipo, status. */
+
+SELECT  TABLE_NAME, CONSTRAINT_NAME,STATUS FROM USER_CONSTRAINTS;
+
+ -- colunas com nome, valores mínimo e máximo, incremento, cache e próximo número.
+SELECT MIN_VALUE, MAX_VALUE,INCREMENT_BY, CACHE_SIZE,(LAST_NUMBER +1) AS NEXT_NUMBER  FROM USER_SEQUENCES;
+
+
+--	Altere as configurações das sequences SQ_FUNC e SQ_DEPTO para deixá-las sem cache.
+/* CREATE SEQUENCE SQ_FUNCIONARIO;
+CREATE SEQUENCE SQ_DEPARTAMENTO;
+CREATE SEQUENCE SQ_PROJETO; */
+alter sequence SQ_FUNCIONARIO 
+    NOCACHE;
+alter sequence SQ_DEPARTAMENTO
+    NOCACHE;
+    
+/*Aumente para 100 o cache da sequence SQ_PROJ e verifique novamente a USER_SEQUENCES. */
+ALTER SEQUENCE SQ_PROJETO
+    CACHE 100;
+
+SELECT * FROM  USER_SEQUENCES;    
+-- Execute o comando "SELECT sq_func.CURRVAL FROM DUAL;".
+
+SELECT SQ_FUNCIONARIO.CURRVAL FROM DUAL;
+
+--Abra outra janela do SQL Develper e teste as sequences com NEXTVAL e CURRVAL nas duas janelas. Verifique a USER_SEQUENCES novamente.
+
+SELECT SQ_FUNCIONARIO.NEXTVAL FROM DUAL;
+
+SELECT SQ_FUNCIONARIO.CURRVAL FROM DUAL;
